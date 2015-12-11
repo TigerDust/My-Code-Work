@@ -1,0 +1,74 @@
+using UnityEngine;
+using System.Collections;
+//implements basic jetpack behaviours for up/down movement
+public class jetpack : MonoBehaviour {
+	public float boostForceMax = 20.0f; //max boost we can ever get
+	public float boostBatteryMax = 100.0f;//max potential battery amount
+	public float boostForceIncrease = 1.5f;// boost force increase per second
+	public float boostForceDecay = 2.0f; //boost force lost per second when not boosting
+	public float boostBatteryDrain = 20.0f; //battery drain per second while boosting
+	public float boostBatteryRecharge = 10.0f; // battery recovered per second, non boosting
+	public KeyCode boostKey = KeyCode.X;
+	
+	
+	
+	
+	//internals
+	CCMove motor; //the actual character controller
+	float boostForce = 0.0f; //how much boost to apply this frame
+	float boostBattery; //how much battery is left this frame
+	
+	
+	//debug gui nonsense
+	public bool guiOn = true;
+	Rect panelGroupRect =   new Rect (10.0f, 10.0f, 256.0f, 256.0f);
+	Rect bgBoxRect = 		new Rect (0.0f, 0.0f, 256.0f, 256.0f);
+	Rect boostForceRect = 	new Rect (10.0f, 10.0f, 256.0f, 20.0f);
+	Rect boostBatteryRect = new Rect (10.0f, 34.0f, 256.0f, 20.0f);
+	Rect actorVelRect = 	new Rect (10.0f, 58.0f, 256.0f, 20.0f);
+	
+	
+	
+	// Use this for initialization
+	void Start () {
+		motor = GetComponent<CCMove>();
+		if (!motor) {Debug.Log ("stop fucking up!");}
+		boostBattery = boostBatteryMax;
+	}
+	
+	// Update is called once per frame
+	void Update () {
+	SetBoostForce ();
+		if(boostForce>0.0f)
+			motor.CurVelocity += boostForce;
+	}
+	
+	
+	void SetBoostForce(){
+		if(Input.GetKey(boostKey) && boostBattery > 0.0f) { //boosting
+			boostBattery -= boostBatteryDrain *Time.deltaTime;
+			boostForce += boostForceIncrease * Time.deltaTime;
+			
+		}
+		else{ //not boosting
+			boostBattery += boostBatteryRecharge *Time.deltaTime;
+			boostForce-= boostForceDecay*Time.deltaTime;
+			
+	}
+		//now that force and battery are computed, clamp both
+		boostBattery =Mathf.Clamp (boostBattery, 0.0f, boostBatteryMax);
+		boostForce=Mathf.Clamp(boostForce, 0.0f, boostForceMax);
+	}
+	
+	
+	
+	void OnGUI(){
+		if(!guiOn) {return;}
+			GUI.BeginGroup (panelGroupRect);
+			GUI.Box (bgBoxRect,GUIContent.none);
+			GUI.Label(boostForceRect, "boost force" +boostForce);
+			GUI.Label(boostBatteryRect, "boost batt" +boostBattery);
+			GUI.Label(actorVelRect, "velocity" +motor.CurVelocity);
+			GUI.EndGroup();
+	}
+}
