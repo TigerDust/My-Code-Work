@@ -1,0 +1,69 @@
+using UnityEngine;
+using System.Collections;
+
+// Gravity Gun:
+// - when holding the fire button:
+//	- If we don't have an attracted object, continually raycast forward to find one
+//	- If the raycast hits an object with a rigidbody, it becomes the attracted object
+//	- If we have an attracted object, it is held out in front of us until releasing the fire button
+// - when releasing the fire button:
+//	- If we have an attracted object, launch that sh*t
+public class GravityGun : MonoBehaviour {
+	public float launchForce = 1000.0f; // How much force we add to the attracted object when released
+	Rigidbody attractedObject; // The rigidbody of the object we hit
+	bool ready = false; // Whether we're ready to fire or not
+	RaycastHit hit;
+	
+	// Update is called once per frame
+	void Update () {
+			if( attractedObject)
+		{
+				// in this case we have an attracted object and are still holding the button
+				// update the object's position to stay with us
+				attractedObject.transform.position = transform.position + (transform.forward*2.0f);
+				attractedObject.velocity = Vector3.zero;
+			}
+		// Check if the right mouse button was pressed
+		if (Input.GetMouseButtonDown (1)) {
+			// If we're not ready, perform the raycast
+			if (!ready) {
+				if (Physics.Raycast (transform.position, transform.forward, out hit)) {
+					// we've hit something, make sure it has a rigidbody
+					if (hit.rigidbody == null) {
+						return; // bail
+					}
+					
+					// Debug info about our new attracted object
+					Debug.Log ("Gravity Gun caught: " + hit.collider.gameObject.name);
+					
+					// make this the new attracted object
+					attractedObject = hit.rigidbody;
+					ready = true;
+				}
+			}
+
+		}		
+		else if (Input.GetMouseButtonDown(0)) {
+			// Check if the left mouse button has been released
+			if (attractedObject) {
+				// Function: AddForce(Vector3 force)
+				// Why a vector?
+				// - The physics system needs to know what direction to apply
+				//		the force in, in addition to the force/power itself
+				attractedObject.AddForce (transform.forward*launchForce);
+				attractedObject = null;
+			}
+			else{
+				if (Physics.Raycast (transform.position, transform.forward, out hit)) {
+					// we've hit something, make sure it has a rigidbody
+					if (hit.rigidbody == null) {
+						return; // bail
+					}
+					hit.rigidbody.AddForce(transform.forward * launchForce);
+				}
+			}
+			ready = false;
+		}
+	}
+}
+
