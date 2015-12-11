@@ -1,0 +1,46 @@
+using UnityEngine;
+using System.Collections;
+
+public class PlayerMove : MonoBehaviour {
+
+
+
+	public float speed;
+	public GameObject bullet;
+
+//	void Start(){
+	//	animation = getComponent>
+
+	//}
+
+
+	void Update ()
+	{
+
+if (Input.GetMouseButtonDown (0)) {
+			Instantiate(bullet, transform.position,transform.rotation);
+		}
+
+	}
+
+
+
+
+
+
+	void FixedUpdate()
+	{// this controls mouse look
+		var mousePosition = Camera.main.ScreenToWorldPoint (Input.mousePosition);
+		Quaternion Rotate = Quaternion.LookRotation (transform.position - mousePosition,
+		                                              Vector3.forward);
+
+		transform.rotation = Rotate; //rotation of ship looks at mouse
+		transform.eulerAngles = new Vector3 (0, 0, transform.eulerAngles.z); //only rotates one axis
+		rigidbody2D.angularVelocity = 0;// stop slide effect
+
+		float input = Input.GetAxis ("Vertical");
+		rigidbody2D.AddForce(gameObject.transform.up*speed*input);
+
+	}
+
+}
