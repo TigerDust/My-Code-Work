@@ -1,0 +1,197 @@
+using UnityEngine;
+using System.Collections;
+
+// Gravity Gun:
+// - when holding the fire button:
+//	- If we don't have an attracted object, continually raycast forward to find one
+//	- If the raycast hits an object with a rigidbody, it becomes the attracted object
+//	- If we have an attracted object, it is held out in front of us until releasing the fire button
+//  - when releasing the fire button:
+//	- If we have an attracted object, launch that sh*t
+public class ColoredAmmoManager : MonoBehaviour
+{
+	GameObject mainCamera;
+	PlayerInventory playerInvS;
+	
+	public float launchForce = 1000.0f; // How much force we add to the attracted object when released
+	GameObject attractedObject; 		// The rigidbody of the object we hit
+	//bool ready = false; 				// Whether we're ready to fire or not
+	bool holdingCube = false;
+	
+	bool firingYellow = false;
+	bool firingBlue = false;
+	bool firingRed = false;
+	
+	public int currentProjectile;					// Current projectile equiped to fire
+	public GameObject[] coloredBoxAmmo;				// Links to all types of projectiles we can fire
+	
+	
+	void Start ()
+	{
+		mainCamera = GameObject.FindWithTag("MainCamera");
+		
+		// Tests to see if the required scripts are attached to the player object
+		playerInvS = mainCamera.GetComponent<PlayerInventory> ();
+		
+		firingYellow = true;
+	}
+	
+	// Update is called once per frame
+	void Update ()
+	{
+		//		Screen.lockCursor = true;
+		//		Screen.showCursor = false;
+		
+		if (attractedObject) 
+		{
+			// in this case we have an attracted object and are still holding the button
+			// update the object's position to stay with us
+			attractedObject.transform.position = transform.position + (transform.forward * 2.0f);
+			attractedObject.rigidbody.velocity = Vector3.zero;
+		}
+		
+		if(Input.GetKeyDown (KeyCode.Alpha1))
+		{
+			currentProjectile = 0;
+			firingBlue = false;
+			firingRed = false;
+			firingYellow = true;
+			Debug.Log ("Should Shoot Yellow Cubes");
+		}
+		
+		if(Input.GetKeyDown (KeyCode.Alpha2))
+		{
+			currentProjectile = 1;
+			firingRed = false;
+			firingYellow = false;
+			firingBlue = true;
+			Debug.Log ("Should Shoot Blue Cubes");
+		}
+		
+		if(Input.GetKeyDown (KeyCode.Alpha3))
+		{
+			currentProjectile = 2;
+			firingYellow = false;
+			firingBlue = false;
+			firingRed = true;
+			Debug.Log ("Should Shoot Red Cubes");
+		}
+		
+		
+		// Check if the right mouse button was pressed
+		if (Input.GetMouseButtonDown (1)) 
+		{
+			
+			// If we're not ready, perform the raycast
+			if (!holdingCube) 
+			{
+				//				int layerMask = 1<<8;
+				//				layerMask = ~layerMask;
+				
+				RaycastHit hit;
+				if (Physics.Raycast (transform.position, transform.forward, out hit)) 
+				{
+					//Debug.Log ("Mouse 1 Clicked");
+					//					// we've hit something, make sure it has a rigidbody
+					if (hit.rigidbody == null) 
+					{
+						return; // bail
+					}
+					
+					// Debug info about our new attracted object
+					Debug.Log ("Gravity Gun caught: " + hit.collider.gameObject.name);
+					
+					// make this the new attracted object
+					attractedObject = hit.collider.gameObject;
+					attractedObject.transform.position = Vector3.MoveTowards(attractedObject.transform.position, transform.position, 2.0f * Time.deltaTime);
+					holdingCube = true;
+					
+				}
+				//ready = true;
+				//holdingCube = true;
+			}
+			
+			//			else if(holdingCube)
+			//			{
+			//				attractedObject = null;
+			//				holdingCube = false;
+			//			}
+		}
+		
+		else if (Input.GetMouseButtonDown (0)) 
+		{
+			if(!holdingCube)
+			{
+				// Fire a bullet! Or another projectile!
+				if(firingYellow)
+				{
+					if(playerInvS.yellowCubeAmmoCount > 0)
+					{
+						// Spawn the bullet right in front of player
+						Vector3 spawnPos = transform.position + (transform.forward*1.5f);
+						spawnPos.y += 0.1f;
+						GameObject newProjectile = (GameObject)Instantiate(coloredBoxAmmo[currentProjectile], spawnPos, Quaternion.identity);
+						newProjectile.rigidbody.AddForce(transform.forward * launchForce);
+						
+						playerInvS.yellowCubeAmmoCount --;
+					}
+				}
+				
+				if(firingBlue)
+				{
+					if(playerInvS.blueCubeAmmoCount > 0)
+					{
+						// Spawn the bullet right in front of player
+						Vector3 spawnPos = transform.position + (transform.forward*1.5f);
+						spawnPos.y += 0.1f;
+						GameObject newProjectile = (GameObject)Instantiate(coloredBoxAmmo[currentProjectile], spawnPos, Quaternion.identity);
+						newProjectile.rigidbody.AddForce(transform.forward * launchForce);
+						
+						playerInvS.blueCubeAmmoCount --;
+					}
+				}
+				
+				if(firingRed)
+				{
+					if(playerInvS.redCubeAmmoCount > 0)
+					{
+						// Spawn the bullet right in front of player
+						Vector3 spawnPos = transform.position + (transform.forward*1.5f);
+						spawnPos.y += 0.1f;
+						GameObject newProjectile = (GameObject)Instantiate(coloredBoxAmmo[currentProjectile], spawnPos, Quaternion.identity);
+						newProjectile.rigidbody.AddForce(transform.forward * launchForce);
+						
+						playerInvS.redCubeAmmoCount --;
+					}
+				}
+			}
+			
+			if (holdingCube)
+			{
+				// Check if the left mouse button has been released
+				if (attractedObject)
+				{
+					// Function: AddForce(Vector3 force)
+					// Why a vector?
+					// - The physics system needs to know what direction to apply
+					//		the force in, in addition to the force/power itself
+					attractedObject.rigidbody.AddForce (transform.forward * launchForce);
+					attractedObject = null;
+				}
+				
+				holdingCube = false;
+			}
+			
+			//ready = false;
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
